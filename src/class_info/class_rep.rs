@@ -110,9 +110,9 @@ impl ClassFile {
         let constant_pool_count = data.read_2_bytes()?;
         assert_eq!(37, constant_pool_count);
 
-        for constant_idx in 1..constant_pool_count {
+        for _constant_idx in 1..constant_pool_count {
             let constant_tag = data.read_1_byte()?;
-            let constant_type = ConstantType::from(constant_tag);
+            let _constant_type = ConstantType::from(constant_tag);
         }
 
         Ok(Self {

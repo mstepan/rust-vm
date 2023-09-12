@@ -1,5 +1,7 @@
 use std::io::{Error, ErrorKind};
 
+use std::str;
+
 pub struct RawClassData {
     pub cursor: usize,
     pub data: Vec<u8>,
@@ -7,11 +9,8 @@ pub struct RawClassData {
 
 impl RawClassData {
     pub fn read_4_bytes(&mut self) -> Result<u32, Error> {
-        if self.cursor + 4 >= self.data.len() {
-            return Err(Error::new(
-                ErrorKind::InvalidData,
-                "Can't read beyond buf boundary",
-            ));
+        if let Some(error) = self.check_boundary(4) {
+            return Err(error);
         }
 
         let offset = self.cursor;
@@ -27,11 +26,8 @@ impl RawClassData {
     }
 
     pub fn read_2_bytes(&mut self) -> Result<u16, Error> {
-        if self.cursor + 2 >= self.data.len() {
-            return Err(Error::new(
-                ErrorKind::InvalidData,
-                "Can't read beyond buf boundary",
-            ));
+        if let Some(error) = self.check_boundary(2) {
+            return Err(error);
         }
 
         let offset = self.cursor;
@@ -44,11 +40,8 @@ impl RawClassData {
     }
 
     pub fn read_1_byte(&mut self) -> Result<u8, Error> {
-        if self.cursor + 1 >= self.data.len() {
-            return Err(Error::new(
-                ErrorKind::InvalidData,
-                "Can't read beyond buf boundary",
-            ));
+        if let Some(error) = self.check_boundary(1) {
+            return Err(error);
         }
 
         let offset = self.cursor;
@@ -58,5 +51,33 @@ impl RawClassData {
         self.cursor += 1;
 
         Ok(value)
+    }
+
+    pub fn read_string(&mut self, length: usize) -> Result<String, Error> {
+        if let Some(error) = self.check_boundary(length) {
+            return Err(error);
+        }
+
+        let res = str::from_utf8(&self.data[self.cursor..self.cursor + length]).map_err(|err| {
+            Error::new(
+                ErrorKind::InvalidData,
+                format!("Can't parse UTF-8 String {}", err),
+            )
+        })?;
+
+        self.cursor += length;
+
+        Ok(res.to_string())
+    }
+
+    fn check_boundary(&self, length: usize) -> Option<Error> {
+        if self.cursor + length >= self.data.len() {
+            return Some(Error::new(
+                ErrorKind::InvalidData,
+                "Can't read beyond buf boundary",
+            ));
+        }
+
+        None
     }
 }

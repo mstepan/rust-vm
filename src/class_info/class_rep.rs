@@ -12,6 +12,7 @@ pub struct ClassFile {
     magic_number: u32,
     java_version: JavaVersion,
     constant_pool_count: u16,
+    constant_info: Vec<ConstantType>,
 }
 
 #[derive(Debug)]
@@ -55,41 +56,95 @@ impl JavaVersion {
 /**
  * https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.4-140
  */
+#[derive(Debug)]
 enum ConstantType {
-    Class,
+    /*
+     CONSTANT_Class_info {
+        u1 tag;
+        u2 name_index;
+    }
+     */
+    Class {
+        name_index: u16,
+    },
     Fieldref,
-    Methodref,
+
+    /*
+    CONSTANT_Methodref_info {
+        u1 tag;
+        u2 class_index;
+        u2 name_and_type_index;
+    }
+     */
+    Methodref {
+        class_index: u16,
+        name_and_type_index: u16,
+    },
     InterfaceMethodref,
     String,
     Integer,
     Float,
     Long,
     Double,
-    NameAndType,
-    Utf8,
+    /*
+    CONSTANT_NameAndType_info {
+        u1 tag;
+        u2 name_index;
+        u2 descriptor_index;
+    }
+    */
+    NameAndType {
+        name_index: u16,
+        descriptor_index: u16,
+    },
+    /*
+    CONSTANT_Utf8_info {
+        u1 tag;
+        u2 length;
+        u1 bytes[length];
+    }
+    */
+    Utf8 {
+        value: String,
+    },
     MethodHandle,
     MethodType,
     InvokeDynamic,
     Undefined,
 }
 impl ConstantType {
-    fn from(tag: u8) -> Self {
-        match tag {
-            7 => Self::Class,
-            9 => Self::Fieldref,
-            10 => Self::Methodref,
-            11 => Self::InterfaceMethodref,
-            8 => Self::String,
-            3 => Self::Integer,
-            4 => Self::Float,
-            5 => Self::Long,
-            6 => Self::Double,
-            12 => Self::NameAndType,
-            1 => Self::Utf8,
-            15 => Self::MethodHandle,
-            16 => Self::MethodType,
-            18 => Self::InvokeDynamic,
-            _ => Self::Undefined,
+    fn from(data: &mut RawClassData) -> Result<Self, Error> {
+        let constant_tag = data.read_1_byte()?;
+
+        match constant_tag {
+            7 => Ok(Self::Class {
+                name_index: data.read_2_bytes()?,
+            }),
+            9 => Ok(Self::Fieldref),
+            10 => Ok(Self::Methodref {
+                class_index: data.read_2_bytes()?,
+                name_and_type_index: data.read_2_bytes()?,
+            }),
+            11 => Ok(Self::InterfaceMethodref),
+            8 => Ok(Self::String),
+            3 => Ok(Self::Integer),
+            4 => Ok(Self::Float),
+            5 => Ok(Self::Long),
+            6 => Ok(Self::Double),
+            12 => Ok(Self::NameAndType {
+                name_index: data.read_2_bytes()?,
+                descriptor_index: data.read_2_bytes()?,
+            }),
+            1 => {
+                let str_length = data.read_2_bytes()? as usize;
+                Ok(Self::Utf8 {
+                    value: data.read_string(str_length)?,
+                })
+            }
+            15 => Ok(Self::MethodHandle),
+            16 => Ok(Self::MethodType),
+            18 => Ok(Self::InvokeDynamic),
+            _ => Ok(Self::Undefined),
         }
     }
 }
@@ -110,15 +165,19 @@ impl ClassFile {
         let constant_pool_count = data.read_2_bytes()?;
         assert_eq!(37, constant_pool_count);
 
+        let mut constant_info = Vec::with_capacity((constant_pool_count - 1) as usize);
+
         for _constant_idx in 1..constant_pool_count {
-            let constant_tag = data.read_1_byte()?;
-            let _constant_type = ConstantType::from(constant_tag);
+            let constant_value = ConstantType::from(data)?;
+
+            constant_info.push(constant_value);
         }
 
         Ok(Self {
             magic_number,
             java_version,
             constant_pool_count,
+            constant_info,
         })
     }
 }

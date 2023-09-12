@@ -1,4 +1,9 @@
 #![allow(dead_code)]
+
+use std::io::Error;
+
+use crate::class_info::raw_data::RawClassData;
+
 /**
  * JVM file format https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html
  */
@@ -47,46 +52,73 @@ impl JavaVersion {
     }
 }
 
+/**
+ * https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.4-140
+ */
+enum ConstantType {
+    Class,
+    Fieldref,
+    Methodref,
+    InterfaceMethodref,
+    String,
+    Integer,
+    Float,
+    Long,
+    Double,
+    NameAndType,
+    Utf8,
+    MethodHandle,
+    MethodType,
+    InvokeDynamic,
+    Undefined,
+}
+impl ConstantType {
+    fn from(tag: u8) -> Self {
+        match tag {
+            7 => Self::Class,
+            9 => Self::Fieldref,
+            10 => Self::Methodref,
+            11 => Self::InterfaceMethodref,
+            8 => Self::String,
+            3 => Self::Integer,
+            4 => Self::Float,
+            5 => Self::Long,
+            6 => Self::Double,
+            12 => Self::NameAndType,
+            1 => Self::Utf8,
+            15 => Self::MethodHandle,
+            16 => Self::MethodType,
+            18 => Self::InvokeDynamic,
+            _ => Self::Undefined,
+        }
+    }
+}
+
 const JAVA_MAGIC_NUMBER: u32 = 0xCA_FE_BA_BE;
 
 impl ClassFile {
-    pub fn new(data: &[u8]) -> Self {
-        let mut cursor = 0;
-
-        let magic_number = Self::read_4_bytes(cursor, data);
-        cursor += 4;
+    pub fn new(data: &mut RawClassData) -> Result<Self, Error> {
+        let magic_number = data.read_4_bytes()?;
         assert_eq!(JAVA_MAGIC_NUMBER, magic_number);
 
-        let minor_version = Self::read_2_bytes(cursor, data);
-        cursor += 2;
+        let minor_version = data.read_2_bytes()?;
 
-        let major_version = Self::read_2_bytes(cursor, data);
-        cursor += 2;
+        let major_version = data.read_2_bytes()?;
 
         let java_version = JavaVersion::from(major_version, minor_version);
 
-        let constant_pool_count = Self::read_2_bytes(cursor, data);
-        cursor += 2;
+        let constant_pool_count = data.read_2_bytes()?;
         assert_eq!(37, constant_pool_count);
 
-        Self {
+        for constant_idx in 1..constant_pool_count {
+            let constant_tag = data.read_1_byte()?;
+            let constant_type = ConstantType::from(constant_tag);
+        }
+
+        Ok(Self {
             magic_number,
             java_version,
             constant_pool_count,
-        }
-    }
-
-    fn read_4_bytes(offset: u32, data: &[u8]) -> u32 {
-        let offset = offset as usize;
-
-        (data[offset] as u32) << 24
-            | (data[offset + 1] as u32) << 16
-            | (data[offset + 2] as u32) << 8
-            | (data[offset + 3] as u32)
-    }
-
-    fn read_2_bytes(offset: u32, data: &[u8]) -> u16 {
-        let offset = offset as usize;
-        (data[offset] as u16) << 8 | (data[offset + 1] as u16)
+        })
     }
 }

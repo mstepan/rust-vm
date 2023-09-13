@@ -13,6 +13,7 @@ const HEX_DIGITS: [char; 16] = [
 
 fn main() {
     const FILE_PATH: &str =
+        // "/Users/mstepan/repo/app-java17-template/target/classes/com/max/app17/MyInterface.class";
         "/Users/mstepan/repo/app-java17-template/target/classes/com/max/app17/Main.class";
 
     let mut class_file_buf = BufReader::new(File::open(FILE_PATH).expect("Can't open file"));

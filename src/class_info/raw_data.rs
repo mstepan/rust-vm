@@ -8,6 +8,27 @@ pub struct RawClassData {
 }
 
 impl RawClassData {
+    pub fn read_8_bytes(&mut self) -> Result<u64, Error> {
+        if let Some(error) = self.check_boundary(8) {
+            return Err(error);
+        }
+
+        let offset = self.cursor;
+        let buf = &self.data;
+
+        let value = (buf[offset] as u64) << 56
+            | (buf[offset] as u64) << 48
+            | (buf[offset] as u64) << 40
+            | (buf[offset] as u64) << 32
+            | (buf[offset] as u64) << 24
+            | (buf[offset + 1] as u64) << 16
+            | (buf[offset + 2] as u64) << 8
+            | (buf[offset + 3] as u64);
+
+        self.cursor += 8;
+        Ok(value)
+    }
+
     pub fn read_4_bytes(&mut self) -> Result<u32, Error> {
         if let Some(error) = self.check_boundary(4) {
             return Err(error);

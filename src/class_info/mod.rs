@@ -1,2 +1,5 @@
-pub mod class_rep;
+pub mod class_file;
+pub mod constant_pool;
+pub mod field_info;
+pub mod method_info;
 pub mod raw_data;

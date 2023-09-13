@@ -4,7 +4,7 @@ use std::io::BufReader;
 use std::io::Read;
 
 mod class_info;
-use class_info::class_rep::ClassFile;
+use class_info::class_file::ClassFile;
 use class_info::raw_data::RawByteBuffer;
 
 const HEX_DIGITS: [char; 16] = [

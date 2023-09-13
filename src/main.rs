@@ -5,7 +5,7 @@ use std::io::Read;
 
 mod class_info;
 use class_info::class_rep::ClassFile;
-use class_info::raw_data::RawClassData;
+use class_info::raw_data::RawByteBuffer;
 
 const HEX_DIGITS: [char; 16] = [
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
@@ -23,7 +23,7 @@ fn main() {
         .read_to_end(&mut buf)
         .expect("Can't read file into memory");
 
-    let mut raw_file_data = RawClassData {
+    let mut raw_file_data = RawByteBuffer {
         cursor: 0,
         data: buf,
     };

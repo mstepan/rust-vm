@@ -2,12 +2,12 @@ use std::io::{Error, ErrorKind};
 
 use std::str;
 
-pub struct RawClassData {
+pub struct RawByteBuffer {
     pub cursor: usize,
     pub data: Vec<u8>,
 }
 
-impl RawClassData {
+impl RawByteBuffer {
     pub fn read_8_bytes(&mut self) -> Result<u64, Error> {
         if let Some(error) = self.check_boundary(8) {
             return Err(error);
@@ -95,7 +95,7 @@ impl RawClassData {
         if self.cursor + length >= self.data.len() {
             return Some(Error::new(
                 ErrorKind::InvalidData,
-                "Can't read beyond buf boundary",
+                "Can't read beyond buffer boundary",
             ));
         }
 

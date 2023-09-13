@@ -2,7 +2,7 @@
 
 use std::io::{Error, ErrorKind};
 
-use crate::class_info::raw_data::RawClassData;
+use crate::class_info::raw_data::RawByteBuffer;
 
 /**
  * JVM file format https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html
@@ -18,7 +18,7 @@ pub struct ClassFile {
     fields: Vec<FieldInfo>,
 }
 impl ClassFile {
-    pub fn new(data: &mut RawClassData) -> Result<Self, Error> {
+    pub fn new(data: &mut RawByteBuffer) -> Result<Self, Error> {
         let magic_number = data.read_4_bytes()?;
         assert_eq!(JAVA_MAGIC_NUMBER, magic_number);
 
@@ -52,14 +52,14 @@ impl ClassFile {
         })
     }
 
-    fn read_java_version(data: &mut RawClassData) -> Result<JavaVersion, Error> {
+    fn read_java_version(data: &mut RawByteBuffer) -> Result<JavaVersion, Error> {
         let minor_version = data.read_2_bytes()?;
         let major_version = data.read_2_bytes()?;
 
         Ok(JavaVersion::from(major_version, minor_version))
     }
 
-    fn read_constant_pool(data: &mut RawClassData) -> Result<Vec<ConstantType>, Error> {
+    fn read_constant_pool(data: &mut RawByteBuffer) -> Result<Vec<ConstantType>, Error> {
         let constant_pool_count = data.read_2_bytes()? as usize;
 
         let mut constant_pool = Vec::with_capacity(constant_pool_count);
@@ -77,14 +77,14 @@ impl ClassFile {
     }
 
     fn read_class_name(
-        data: &mut RawClassData,
+        data: &mut RawByteBuffer,
         constant_pool: &[ConstantType],
     ) -> Result<String, Error> {
         let this_class = data.read_2_bytes()?;
         Self::resolve_constant_pool_utf(constant_pool, (this_class) as usize)
     }
 
-    fn read_interfaces(data: &mut RawClassData) -> Result<Vec<u16>, Error> {
+    fn read_interfaces(data: &mut RawByteBuffer) -> Result<Vec<u16>, Error> {
         let interfaces_count = data.read_2_bytes()?;
 
         let mut interfaces: Vec<u16> = Vec::with_capacity(interfaces_count as usize);
@@ -97,7 +97,7 @@ impl ClassFile {
     }
 
     fn read_fields(
-        data: &mut RawClassData,
+        data: &mut RawByteBuffer,
         constant_pool: &[ConstantType],
     ) -> Result<Vec<FieldInfo>, Error> {
         let fields_count = data.read_2_bytes()?;
@@ -293,7 +293,7 @@ enum ConstantType {
     Undefined,
 }
 impl ConstantType {
-    fn from(data: &mut RawClassData) -> Result<Self, Error> {
+    fn from(data: &mut RawByteBuffer) -> Result<Self, Error> {
         let constant_tag = data.read_1_byte()?;
 
         match constant_tag {
@@ -402,7 +402,7 @@ struct FieldInfo {
 }
 
 impl FieldInfo {
-    fn from(data: &mut RawClassData, constant_pool: &[ConstantType]) -> Result<FieldInfo, Error> {
+    fn from(data: &mut RawByteBuffer, constant_pool: &[ConstantType]) -> Result<FieldInfo, Error> {
         // Read singe FieldInfo here
         let field_access_flags = FieldAcceFlag::from_mask(data.read_2_bytes()?);
 

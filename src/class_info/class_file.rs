@@ -110,6 +110,7 @@ impl ClassFile {
 
         for _ in 0..methods_count {
             let single_method = MethodInfo::from(data, constant_pool)?;
+            println!("{:#?}", single_method);
             methods.push(single_method);
         }
 

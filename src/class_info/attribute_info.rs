@@ -42,10 +42,9 @@ impl AttributeInfo {
             let mut bytecode: Vec<Opcode> = Vec::with_capacity(code_length as usize);
 
             while code_length != 0 {
-                let opcode = dbg!(Opcode::from(data, constant_pool)?);
+                let opcode = Opcode::from(data, constant_pool)?;
 
                 code_length -= opcode.size() as u32;
-
                 bytecode.push(opcode);
             }
 
@@ -114,6 +113,8 @@ impl ExceptionTableInfo {
 #[derive(Debug)]
 pub enum Opcode {
     Nop,
+
+    //https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.iconst_i
     Iconst0,
     Iconst1,
     Iconst2,
@@ -121,15 +122,43 @@ pub enum Opcode {
     Iconst4,
     Iconst5,
 
+    //https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.bipush
+    Bipush { byte_val: u8 },
+
+    //https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.aload_n
     Aload0,
     Aload1,
     Aload2,
     Aload3,
 
+    // https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.istore_n
+    Istore0,
+    Istore1,
+    Istore2,
+    Istore3,
+
+    //https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.iadd
+    Iadd,
+
     Return,
+
+    //https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.getstatic
+    Getstatic { name: String },
+
+    //https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.invokevirtual
+    Invokevirtual { name: String },
+
     Invokespecial { name: String },
 
-    Ldc,
+    // https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.ldc
+    Ldc { name: String },
+
+    //https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.iload_n
+    Iload0,
+    Iload1,
+    Iload2,
+    Iload3,
+
     New { name: String },
     Undefined,
 }
@@ -142,41 +171,80 @@ impl Opcode {
 
         match code {
             0x00 => Ok(Opcode::Nop),
+
             0x03 => Ok(Opcode::Iconst0),
             0x04 => Ok(Opcode::Iconst1),
             0x05 => Ok(Opcode::Iconst2),
             0x06 => Ok(Opcode::Iconst3),
             0x07 => Ok(Opcode::Iconst4),
             0x08 => Ok(Opcode::Iconst5),
-            0x12 => Ok(Opcode::Ldc),
+
+            0x10 => {
+                let byte_val = data.read_1_byte()?;
+                Ok(Opcode::Bipush { byte_val })
+            }
+            0x12 => {
+                let name_idx = data.read_1_byte()?;
+                let name = constant_pool.resolve_constant_pool_utf(name_idx as usize)?;
+                Ok(Opcode::Ldc { name })
+            }
+            0x1A => Ok(Opcode::Iload0),
+            0x1B => Ok(Opcode::Iload1),
+            0x1C => Ok(Opcode::Iload2),
+            0x1D => Ok(Opcode::Iload3),
+
             0x2A => Ok(Opcode::Aload0),
             0x2B => Ok(Opcode::Aload1),
             0x2C => Ok(Opcode::Aload2),
             0x2D => Ok(Opcode::Aload3),
+
+            0x3B => Ok(Opcode::Istore0),
+            0x3C => Ok(Opcode::Istore1),
+            0x3D => Ok(Opcode::Istore2),
+            0x3E => Ok(Opcode::Istore3),
+
+            0x60 => Ok(Opcode::Iadd),
+
             0xB1 => Ok(Opcode::Return),
+
+            0xB2 => {
+                let name = Self::read_index_byte_and_lokup_name(data, constant_pool)?;
+                Ok(Opcode::Getstatic { name })
+            }
+
+            0xB6 => {
+                let name = Self::read_index_byte_and_lokup_name(data, constant_pool)?;
+                Ok(Opcode::Invokevirtual { name })
+            }
+
             0xBB => {
-                let index_byte =
-                    (((data.read_1_byte()?) as usize) << 8) | data.read_1_byte()? as usize;
-
-                let name = constant_pool.resolve_constant_pool_utf(index_byte)?;
-
+                let name = Self::read_index_byte_and_lokup_name(data, constant_pool)?;
                 Ok(Opcode::New { name })
             }
             0xB7 => {
-                let index_byte =
-                    (((data.read_1_byte()?) as usize) << 8) | data.read_1_byte()? as usize;
-
-                let name = constant_pool.resolve_constant_pool_utf(index_byte)?;
+                let name = Self::read_index_byte_and_lokup_name(data, constant_pool)?;
                 Ok(Opcode::Invokespecial { name })
             }
             _ => Ok(Opcode::Undefined),
         }
     }
 
+    fn read_index_byte_and_lokup_name(
+        data: &mut RawByteBuffer,
+        constant_pool: &ConstantPool,
+    ) -> Result<String, Error> {
+        let index_byte = (((data.read_1_byte()?) as usize) << 8) | data.read_1_byte()? as usize;
+        constant_pool.resolve_constant_pool_utf(index_byte)
+    }
+
     pub fn size(&self) -> u8 {
         match &self {
             Opcode::New { name: _ } => 3,
             Opcode::Invokespecial { name: _ } => 3,
+            Opcode::Getstatic { name: _ } => 3,
+            Opcode::Invokevirtual { name: _ } => 3,
+            Opcode::Ldc { name: _ } => 2,
+            Opcode::Bipush { byte_val: _ } => 2,
             _ => 1,
         }
     }

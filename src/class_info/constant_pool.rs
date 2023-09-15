@@ -33,6 +33,14 @@ impl ConstantPool {
             ConstantType::Class { name_index } => {
                 self.resolve_constant_pool_utf(*name_index as usize)
             }
+            ConstantType::Fieldref {
+                class_index,
+                name_and_type_index,
+            } => {
+                let class_name = self.resolve_constant_pool_utf(*class_index as usize)?;
+                let type_name = self.resolve_constant_pool_utf(*name_and_type_index as usize)?;
+                Ok(format!("{}.{}", class_name, type_name))
+            }
             ConstantType::Methodref {
                 class_index,
                 name_and_type_index,
@@ -42,6 +50,8 @@ impl ConstantPool {
 
                 Ok(format!("{}.{}", class_name, type_name))
             }
+
+            ConstantType::String { idx } => Ok(self.resolve_constant_pool_utf(*idx as usize)?),
             ConstantType::NameAndType {
                 name_index,
                 descriptor_index,
@@ -49,7 +59,7 @@ impl ConstantPool {
                 let name = self.resolve_constant_pool_utf(*name_index as usize)?;
                 let descriptor = self.resolve_constant_pool_utf(*descriptor_index as usize)?;
 
-                Ok(format!("{}.{}", name, descriptor))
+                Ok(format!("{}, {}", name, descriptor))
             }
             _ => Err(Error::new(
                 ErrorKind::InvalidData,

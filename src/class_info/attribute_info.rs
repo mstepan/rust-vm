@@ -14,74 +14,74 @@ pub enum AttributeInfo {
         max_locals: u16,
         exception_table: Vec<ExceptionTableInfo>,
     },
-    Other,
+    NotParsedYet,
 }
 
 impl AttributeInfo {
+    /*
+    Attributes.
+    https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.7.3
+    */
     pub fn from(
         data: &mut RawByteBuffer,
         constant_pool: &ConstantPool,
     ) -> Result<AttributeInfo, Error> {
-        let attr_name_idx = data.read_2_bytes()?;
-        let _attr_name = constant_pool.resolve_constant_pool_utf(attr_name_idx as usize)?;
-
+        let attr_name = constant_pool.resolve_constant_pool_utf(data.read_2_bytes()? as usize)?;
         let attr_length = data.read_4_bytes()?;
 
-        // https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.7.3
-        // if attr_name == "Code" {
-        //     let max_stack = data.read_2_bytes()?;
-        //     let max_locals = data.read_2_bytes()?;
+        /*
+        4.7.3. The Code Attribute
+        https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.7.3
+         */
+        if attr_name == "Code" {
+            let max_stack = data.read_2_bytes()?;
+            let max_locals = data.read_2_bytes()?;
 
-        //     let code_length = data.read_4_bytes()?;
+            let mut code_length = data.read_4_bytes()?;
 
-        //     let mut bytecode: Vec<Opcode> = Vec::with_capacity(code_length as usize);
+            let mut bytecode: Vec<Opcode> = Vec::with_capacity(code_length as usize);
 
-        //     for _ in 0..code_length {
-        //         let opcode = Opcode::from(data, constant_pool)?;
-        //         bytecode.push(opcode);
-        //     }
+            while code_length != 0 {
+                let opcode = dbg!(Opcode::from(data, constant_pool)?);
 
-        //     let exception_table_length = data.read_2_bytes()?;
+                code_length -= opcode.size() as u32;
 
-        //     let mut exception_table: Vec<ExceptionTableInfo> =
-        //         Vec::with_capacity(exception_table_length as usize);
+                bytecode.push(opcode);
+            }
 
-        //     // read full exception table here
-        //     for _ in 0..exception_table_length {
-        //         exception_table.push(ExceptionTableInfo::from(data, constant_pool)?);
-        //     }
+            let exception_table_length = data.read_2_bytes()?;
 
-        //     let code_attributes_count = data.read_2_bytes()?;
-        //     // read all code attributed here if any
-        //     for _ in 0..code_attributes_count {
-        //         let _cur_attribute = AttributeInfo::from(data, constant_pool);
-        //     }
+            let mut exception_table: Vec<ExceptionTableInfo> =
+                Vec::with_capacity(exception_table_length as usize);
 
-        //     Ok(AttributeInfo::Code {
-        //         name: attr_name,
-        //         bytecode,
-        //         max_stack,
-        //         max_locals,
-        //         exception_table,
-        //     })
-        // } else {
-        //     // https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.7.12
-        //
-        //     for _ in 0..attr_length {
-        //         // TODO: just skip bytes here for now
-        //         data.read_1_byte();
-        //     }
-        //
-        //     Ok(AttributeInfo::Other {})
-        // }
+            // read full exception table here
+            for _ in 0..exception_table_length {
+                exception_table.push(ExceptionTableInfo::from(data, constant_pool)?);
+            }
 
-        //todo: just consume all bytes here
-        for _ in 0..attr_length {
-            // TODO: just skip bytes here for now
-            data.read_1_byte()?;
+            let code_attributes_count = data.read_2_bytes()?;
+            // read all code attributed here if any
+            for _ in 0..code_attributes_count {
+                let _cur_attribute = AttributeInfo::from(data, constant_pool);
+            }
+
+            Ok(AttributeInfo::Code {
+                name: attr_name,
+                bytecode,
+                max_stack,
+                max_locals,
+                exception_table,
+            })
+        } else {
+            // https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.7.12
+
+            for _ in 0..attr_length {
+                // TODO: just skip bytes here for now
+                data.read_1_byte()?;
+            }
+
+            Ok(AttributeInfo::NotParsedYet {})
         }
-
-        Ok(AttributeInfo::Other {})
     }
 }
 
@@ -170,6 +170,14 @@ impl Opcode {
                 Ok(Opcode::Invokespecial { name })
             }
             _ => Ok(Opcode::Undefined),
+        }
+    }
+
+    pub fn size(&self) -> u8 {
+        match &self {
+            Opcode::New { name: _ } => 3,
+            Opcode::Invokespecial { name: _ } => 3,
+            _ => 1,
         }
     }
 }

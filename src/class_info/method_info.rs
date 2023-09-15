@@ -1,3 +1,4 @@
+use crate::class_info::attribute_info::AttributeInfo;
 use crate::class_info::constant_pool::ConstantPool;
 use crate::class_info::raw_data::RawByteBuffer;
 use std::io::Error;
@@ -13,13 +14,93 @@ method_info {
 }
 */
 #[derive(Debug)]
-pub struct MethodInfo {}
+pub struct MethodInfo {
+    access_flags: Vec<MethodAccessFlag>,
+    name: String,
+    descriptor: String,
+    attributes: Vec<AttributeInfo>,
+}
 
 impl MethodInfo {
     pub fn from(
-        _data: &mut RawByteBuffer,
-        _constant_pool: &ConstantPool,
+        data: &mut RawByteBuffer,
+        constant_pool: &ConstantPool,
     ) -> Result<MethodInfo, Error> {
-        Ok(MethodInfo {})
+        let access_flags = MethodAccessFlag::from_mask(data.read_2_bytes()?);
+
+        let name = Self::read_name_or_descriptor(data, constant_pool)?;
+        let descriptor = Self::read_name_or_descriptor(data, constant_pool)?;
+
+        let attributes_count = data.read_2_bytes()?;
+
+        let mut attributes = Vec::with_capacity(attributes_count as usize);
+
+        for _ in 0..attributes_count {
+            // Read single attribute here
+            let single_attribute = AttributeInfo::from(data, constant_pool)?;
+            attributes.push(single_attribute);
+        }
+
+        Ok(MethodInfo {
+            access_flags,
+            name,
+            descriptor,
+            attributes,
+        })
+    }
+
+    fn read_name_or_descriptor(
+        data: &mut RawByteBuffer,
+        constant_pool: &ConstantPool,
+    ) -> Result<String, Error> {
+        let name_index = data.read_2_bytes()?;
+        let name = constant_pool.resolve_constant_pool_utf(name_index as usize)?;
+        Ok(name)
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum MethodAccessFlag {
+    Public = 0x0001,
+    Private = 0x0002,
+    Protected = 0x0004,
+    Static = 0x0008,
+    Final = 0x0010,
+    Synchronized = 0x0020,
+    Bridge = 0x0040,
+    Varargs = 0x0080,
+    Native = 0x0100,
+    Abstract = 0x0400,
+    Strict = 0x0800,
+    Synthehic = 0x1000,
+}
+impl MethodAccessFlag {
+    fn values() -> Vec<MethodAccessFlag> {
+        vec![
+            MethodAccessFlag::Public,
+            MethodAccessFlag::Private,
+            MethodAccessFlag::Protected,
+            MethodAccessFlag::Static,
+            MethodAccessFlag::Final,
+            MethodAccessFlag::Synchronized,
+            MethodAccessFlag::Bridge,
+            MethodAccessFlag::Varargs,
+            MethodAccessFlag::Native,
+            MethodAccessFlag::Abstract,
+            MethodAccessFlag::Strict,
+            MethodAccessFlag::Synthehic,
+        ]
+    }
+
+    fn from_mask(flags_mask: u16) -> Vec<MethodAccessFlag> {
+        let mut access_flags: Vec<MethodAccessFlag> = Vec::new();
+
+        for single_flag in MethodAccessFlag::values() {
+            if flags_mask & (single_flag as u16) != 0 {
+                access_flags.push(single_flag);
+            }
+        }
+
+        access_flags
     }
 }

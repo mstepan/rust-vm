@@ -29,17 +29,14 @@ impl ClassFile {
         assert_eq!(JAVA_MAGIC_NUMBER, magic_number);
 
         let java_version = Self::read_java_version(data)?;
-        assert_eq!(JavaVersion::Java17, java_version);
 
         let constant_pool = ConstantPool::new(data)?;
 
         let access_flags = ClassAccessFlag::from_mask(data.read_2_bytes()?);
 
         let this_class_name = Self::read_class_name(data, &constant_pool)?;
-        assert_eq!("com/max/app17/Main", this_class_name);
 
         let super_class_name = Self::read_class_name(data, &constant_pool)?;
-        assert_eq!("java/lang/Object", super_class_name);
 
         let interfaces = Self::read_interfaces(data)?;
 

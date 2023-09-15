@@ -1,6 +1,10 @@
 use crate::class_info::raw_data::RawByteBuffer;
 use std::io::{Error, ErrorKind};
 
+/* Some good articles related to JVM constant pool:
+ * https://blogs.oracle.com/javamagazine/post/java-class-file-constant-pool
+ *
+ */
 #[derive(Debug)]
 pub struct ConstantPool {
     values: Vec<ConstantType>,
@@ -13,7 +17,7 @@ impl ConstantPool {
         let mut values = Vec::with_capacity(constant_pool_count);
 
         // constant_pool starts with 1 so we just need to push fake value as 0-based
-        values.push(ConstantType::Undefined);
+        values.push(ConstantType::Reserved);
 
         for _ in 1..constant_pool_count {
             let single_value = ConstantType::from(data)?;
@@ -28,6 +32,24 @@ impl ConstantPool {
             ConstantType::Utf8 { value } => Ok(value.to_string()),
             ConstantType::Class { name_index } => {
                 self.resolve_constant_pool_utf(*name_index as usize)
+            }
+            ConstantType::Methodref {
+                class_index,
+                name_and_type_index,
+            } => {
+                let class_name = self.resolve_constant_pool_utf(*class_index as usize)?;
+                let type_name = self.resolve_constant_pool_utf(*name_and_type_index as usize)?;
+
+                Ok(format!("{}.{}", class_name, type_name))
+            }
+            ConstantType::NameAndType {
+                name_index,
+                descriptor_index,
+            } => {
+                let name = self.resolve_constant_pool_utf(*name_index as usize)?;
+                let descriptor = self.resolve_constant_pool_utf(*descriptor_index as usize)?;
+
+                Ok(format!("{}.{}", name, descriptor))
             }
             _ => Err(Error::new(
                 ErrorKind::InvalidData,
@@ -160,6 +182,9 @@ pub enum ConstantType {
     MethodHandle,
     MethodType,
     InvokeDynamic,
+    // Reserved type will be used to replace 0-based value in constant pool
+    // which doesn't exists in real class file
+    Reserved,
     Undefined,
 }
 impl ConstantType {

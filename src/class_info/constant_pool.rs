@@ -1,4 +1,5 @@
 use crate::class_info::raw_data::RawByteBuffer;
+use std::fmt;
 use std::io::{Error, ErrorKind};
 
 /* Some good articles related to JVM constant pool:
@@ -247,5 +248,11 @@ impl ConstantType {
             18 => Ok(Self::InvokeDynamic),
             _ => Ok(Self::Undefined),
         }
+    }
+}
+
+impl fmt::Display for ConstantType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
     }
 }

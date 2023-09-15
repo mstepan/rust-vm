@@ -155,7 +155,7 @@ impl JavaVersion {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone, Copy)]
 enum ClassAccessFlag {
     Public = 0x0001,
     Final = 0x0010,

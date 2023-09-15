@@ -2,10 +2,10 @@
 
 use std::io::Error;
 
-use crate::class_info::constant_pool::ConstantPool;
-use crate::class_info::field_info::FieldInfo;
-use crate::class_info::method_info::MethodInfo;
-use crate::class_info::raw_data::RawByteBuffer;
+use crate::class_loader::constant_pool::ConstantPool;
+use crate::class_loader::field_info::FieldInfo;
+use crate::class_loader::method_info::MethodInfo;
+use crate::class_loader::raw_data::RawByteBuffer;
 
 const JAVA_MAGIC_NUMBER: u32 = 0xCA_FE_BA_BE;
 
@@ -110,7 +110,6 @@ impl ClassFile {
 
         for _ in 0..methods_count {
             let single_method = MethodInfo::from(data, constant_pool)?;
-            println!("{:#?}", single_method);
             methods.push(single_method);
         }
 

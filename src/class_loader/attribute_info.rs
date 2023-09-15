@@ -1,6 +1,6 @@
-use crate::class_info::constant_pool::ConstantPool;
-use crate::class_info::raw_data::RawByteBuffer;
-use std::io::Error;
+use crate::class_loader::constant_pool::ConstantPool;
+use crate::class_loader::raw_data::RawByteBuffer;
+use std::io::{Error, ErrorKind};
 
 /*
 https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.7
@@ -160,7 +160,6 @@ pub enum Opcode {
     Iload3,
 
     New { name: String },
-    Undefined,
 }
 /**
  * JVM instruction set https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5
@@ -204,7 +203,6 @@ impl Opcode {
             0x3E => Ok(Opcode::Istore3),
 
             0x60 => Ok(Opcode::Iadd),
-
             0xB1 => Ok(Opcode::Return),
 
             0xB2 => {
@@ -225,7 +223,10 @@ impl Opcode {
                 let name = Self::read_index_byte_and_lokup_name(data, constant_pool)?;
                 Ok(Opcode::Invokespecial { name })
             }
-            _ => Ok(Opcode::Undefined),
+            _ => Err(Error::new(
+                ErrorKind::InvalidData,
+                format!("Can't recognize opcode value {}", code),
+            )),
         }
     }
 

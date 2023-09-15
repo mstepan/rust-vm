@@ -1,4 +1,4 @@
-use crate::class_info::raw_data::RawByteBuffer;
+use crate::class_loader::raw_data::RawByteBuffer;
 use std::fmt;
 use std::io::{Error, ErrorKind};
 

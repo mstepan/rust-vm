@@ -1,3 +1,7 @@
 #!/usr/bin/env bash
-javac Hello.java
-javap -v Hello.class
+rm -rf com/max/Hello.class
+javac com/max/Hello.java
+
+# java -cp . com.max.Hello
+
+javap -v com/max/Hello.class

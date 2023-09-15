@@ -1,4 +1,4 @@
-
+package com.max;
 
 public class Hello {
 

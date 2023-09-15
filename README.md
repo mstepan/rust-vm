@@ -15,5 +15,11 @@ cargo build
 * To execute locally use:
 
 ```bash
-target/debug/rust-vm com.max.Hello
+target/debug/rust-vm -cp java com.max.Hello
+```
+
+Or you can just run the script which will do the same steps:
+
+```bash
+./run.sh
 ```

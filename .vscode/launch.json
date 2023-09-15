@@ -20,6 +20,8 @@
                 }
             },
             "args": [
+                "-cp",
+                "java",
                 "com.max.Hello"
             ],
             "cwd": "${workspaceFolder}"
@@ -41,6 +43,8 @@
                 }
             },
             "args": [
+                "-cp",
+                "java",
                 "com.max.Hello"
             ],
             "cwd": "${workspaceFolder}"

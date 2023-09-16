@@ -115,6 +115,19 @@ impl ClassFile {
 
         Ok(methods)
     }
+
+    pub fn main_method(&self) -> Result<&MethodInfo, Error> {
+        for single_mehtod in &self.methods {
+            if single_mehtod.is_main() {
+                return Ok(single_mehtod);
+            }
+        }
+
+        Err(Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!("Can't find 'main' method for class {}", self.this_class),
+        ))
+    }
 }
 
 #[derive(Debug, PartialEq)]

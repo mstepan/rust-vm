@@ -1,4 +1,4 @@
-use crate::class_loader::attribute_info::AttributeInfo;
+use crate::class_loader::attribute_info::{AttributeInfo, Opcode};
 use crate::class_loader::constant_pool::ConstantPool;
 use crate::class_loader::raw_data::RawByteBuffer;
 use std::io::Error;
@@ -56,6 +56,27 @@ impl MethodInfo {
         let name_index = data.read_2_bytes()?;
         let name = constant_pool.resolve_constant_pool_utf(name_index as usize)?;
         Ok(name)
+    }
+
+    pub fn is_main(&self) -> bool {
+        self.name == "main"
+    }
+
+    pub fn get_bytecode(&self) -> Option<&[Opcode]> {
+        for single_attribute in &self.attributes {
+            if let AttributeInfo::Code {
+                name: _,
+                bytecode,
+                max_stack: _,
+                max_locals: _,
+                exception_table: _,
+            } = single_attribute
+            {
+                return Some(bytecode);
+            }
+        }
+
+        None
     }
 }
 

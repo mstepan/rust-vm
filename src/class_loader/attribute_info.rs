@@ -239,7 +239,7 @@ impl Opcode {
     }
 
     pub fn size(&self) -> u8 {
-        match &self {
+        match self {
             Opcode::New { name: _ } => 3,
             Opcode::Invokespecial { name: _ } => 3,
             Opcode::Getstatic { name: _ } => 3,

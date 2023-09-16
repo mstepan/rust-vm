@@ -25,7 +25,7 @@ impl ClassRegistry {
             real_classpath_folder.push_str(current_dir);
         } else {
             real_classpath_folder.push_str(current_dir);
-            real_classpath_folder.push_str("/");
+            real_classpath_folder.push('/');
             real_classpath_folder.push_str(&class_path_folder);
         }
 
@@ -44,7 +44,7 @@ impl ClassRegistry {
         );
 
         println!(
-            "Loading class into JVM class name: '{}', path: '{}'",
+            "Loading class '{}' into JVM with path: '{}'",
             class_name, full_class_path
         );
 

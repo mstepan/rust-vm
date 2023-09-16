@@ -9,6 +9,7 @@ use crate::class_loader::class_registry::ClassRegistry;
 fn main() {
     let args: Vec<String> = env::args().collect();
 
+    // Skip 0-argument here b/c it will be just executable name
     let maybe_launch_ctx = parse_launch_params(&args[1..]);
 
     match maybe_launch_ctx {
@@ -20,7 +21,23 @@ fn main() {
             let maybe_main_class = global_class_registry.load_class(main_class_name);
 
             match maybe_main_class {
-                Ok(class_file) => println!("{:#?}", class_file),
+                Ok(class_file) => {
+                    //println!("{:#?}", class_file);
+
+                    match class_file.main_method() {
+                        Ok(main_method) => {
+                            println!("'main'  found and will be executed");
+
+                            match main_method.get_bytecode() {
+                                Some(bytecode) => {
+                                    println!("{:#?}", bytecode);
+                                }
+                                None => panic!("No bytecode for 'main' function, really strange"),
+                            }
+                        }
+                        Err(error) => panic!("Failed with {}", error),
+                    }
+                }
                 Err(err) => panic!("Failed to load main class {}", err),
             }
 
@@ -38,7 +55,8 @@ fn parse_launch_params(args: &[String]) -> Result<LaunchContex, Error> {
         ));
     }
 
-    // com.max.Hello
+    // if single argument passed we assume that this is main class for execution
+    // example: com.max.Hello
     if args.len() == 1 {
         return Ok(LaunchContex {
             class_path: ".".to_string(),
@@ -46,7 +64,8 @@ fn parse_launch_params(args: &[String]) -> Result<LaunchContex, Error> {
         });
     }
 
-    // cp path/to/classes com.max.Hello
+    // if 3 argument passed we assume that first 2 point to the class path folder
+    // example: -cp path/to/classes com.max.Hello
     if args.len() == 3 {
         return Ok(LaunchContex {
             class_path: args[1].to_string(),

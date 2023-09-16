@@ -12,7 +12,13 @@ As a linter use [Clippy](https://github.com/rust-lang/rust-clippy)
 cargo build
 ```
 
-* To execute locally use:
+* To execute locally use cargo
+
+```bash
+cargo run -- -cp java com.max.Hello
+```
+
+or rust-vm binary file
 
 ```bash
 target/debug/rust-vm -cp java com.max.Hello

@@ -21,8 +21,8 @@ fn main() {
             let maybe_main_class = global_class_registry.load_class(main_class_name);
 
             match maybe_main_class {
-                Ok(class_file) => {
-                    //println!("{:#?}", class_file);
+                Ok(mut class_file) => {
+                    // class_file = dbg!(class_file);
 
                     match class_file.main_method() {
                         Ok(main_method) => {

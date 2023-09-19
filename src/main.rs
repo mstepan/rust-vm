@@ -35,10 +35,10 @@ fn main() {
                                 None => panic!("No bytecode for 'main' function, really strange"),
                             }
                         }
-                        Err(error) => panic!("Failed with {}", error),
+                        Err(error) => panic!("Failed with error: {}", error),
                     }
                 }
-                Err(err) => panic!("Failed to load main class {}", err),
+                Err(err) => panic!("Failed to load main class with error: {}", err),
             }
 
             println!("JVM exited successfully");

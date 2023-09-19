@@ -140,6 +140,13 @@ pub enum Opcode {
     //https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.iadd
     Iadd,
 
+    Ificmpeq,
+    Ificmpne,
+    Ificmplt,
+    Ificmpge,
+    Ificmpgt,
+    Ificmple,
+
     Return,
 
     //https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.getstatic
@@ -149,6 +156,9 @@ pub enum Opcode {
     Invokevirtual { name: String },
 
     Invokespecial { name: String },
+
+    // https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.return
+    Invokestatic { name: String },
 
     // https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.ldc
     Ldc { name: String },
@@ -223,9 +233,15 @@ impl Opcode {
                 let name = Self::read_index_byte_and_lokup_name(data, constant_pool)?;
                 Ok(Opcode::Invokespecial { name })
             }
+
+            0xB8 => {
+                let name = Self::read_index_byte_and_lokup_name(data, constant_pool)?;
+                Ok(Opcode::Invokestatic { name })
+            }
+
             _ => Err(Error::new(
                 ErrorKind::InvalidData,
-                format!("Can't recognize opcode value {}", code),
+                format!("Can't recognize opcode value: '{}'", code),
             )),
         }
     }
@@ -244,6 +260,7 @@ impl Opcode {
             Opcode::Invokespecial { name: _ } => 3,
             Opcode::Getstatic { name: _ } => 3,
             Opcode::Invokevirtual { name: _ } => 3,
+            Opcode::Invokestatic { name: _ } => 3,
             Opcode::Ldc { name: _ } => 2,
             Opcode::Bipush { byte_val: _ } => 2,
             _ => 1,

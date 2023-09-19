@@ -1,6 +1,7 @@
+use std::io::{Error, ErrorKind};
+
 use crate::class_loader::constant_pool::ConstantPool;
 use crate::class_loader::raw_data::RawByteBuffer;
-use std::io::{Error, ErrorKind};
 
 /*
 https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.7
@@ -140,13 +141,22 @@ pub enum Opcode {
     //https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.iadd
     Iadd,
 
-    Ificmpeq,
-    Ificmpne,
-    Ificmplt,
-    Ificmpge,
-    Ificmpgt,
-    Ificmple,
+    //https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.iinc
+    Iinc{index: u8, value: i8},
 
+    // https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.if_icmp_cond
+    Ificmpeq(u8, u8),
+    Ificmpne(u8, u8),
+    Ificmplt(u8, u8),
+    Ificmpge(u8, u8),
+    Ificmpgt(u8, u8),
+    Ificmple(u8, u8),
+
+    // https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.goto
+    Goto(u8, u8),
+
+    // https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.ireturn
+    Ireturn,
     Return,
 
     //https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.getstatic
@@ -171,6 +181,7 @@ pub enum Opcode {
 
     New { name: String },
 }
+
 /**
  * JVM instruction set https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5
  */
@@ -213,6 +224,19 @@ impl Opcode {
             0x3E => Ok(Opcode::Istore3),
 
             0x60 => Ok(Opcode::Iadd),
+
+            0x84 => Ok(Opcode::Iinc {index: data.read_1_byte()?, value: data.read_1_byte()? as i8}),
+
+            0x9F => Ok(Opcode::Ificmpeq(data.read_1_byte()?, data.read_1_byte()?)),
+            0xA0 => Ok(Opcode::Ificmpne(data.read_1_byte()?, data.read_1_byte()?)),
+            0xA1 => Ok(Opcode::Ificmplt(data.read_1_byte()?, data.read_1_byte()?)),
+            0xA2 => Ok(Opcode::Ificmpge(data.read_1_byte()?, data.read_1_byte()?)),
+            0xA3 => Ok(Opcode::Ificmpgt(data.read_1_byte()?, data.read_1_byte()?)),
+            0xA4 => Ok(Opcode::Ificmple(data.read_1_byte()?, data.read_1_byte()?)),
+
+            0xA7 => Ok(Opcode::Goto(data.read_1_byte()?, data.read_1_byte()?)),
+
+            0xAC => Ok(Opcode::Ireturn),
             0xB1 => Ok(Opcode::Return),
 
             0xB2 => {
@@ -261,6 +285,18 @@ impl Opcode {
             Opcode::Getstatic { name: _ } => 3,
             Opcode::Invokevirtual { name: _ } => 3,
             Opcode::Invokestatic { name: _ } => 3,
+
+            Opcode::Iinc{index: _, value: _} => 3,
+
+            Opcode::Ificmpeq(_, _) => 3,
+            Opcode::Ificmpne(_, _) => 3,
+            Opcode::Ificmplt(_, _) => 3,
+            Opcode::Ificmpge(_, _) => 3,
+            Opcode::Ificmpgt(_, _) => 3,
+            Opcode::Ificmple(_, _) => 3,
+
+            Opcode::Goto(_, _) => 3,
+
             Opcode::Ldc { name: _ } => 2,
             Opcode::Bipush { byte_val: _ } => 2,
             _ => 1,

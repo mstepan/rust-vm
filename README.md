@@ -1,6 +1,7 @@
 # Simple JVM implementation using Rust
 
-For details related to VSCode configuration check [VSCode Rust integration](https://code.visualstudio.com/docs/languages/rust)
+For details related to VSCode configuration
+check [VSCode Rust integration](https://code.visualstudio.com/docs/languages/rust)
 
 As a linter use [Clippy](https://github.com/rust-lang/rust-clippy)
 

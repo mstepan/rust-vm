@@ -1,6 +1,8 @@
+use std::io::Error;
+
 use crate::class_loader::constant_pool::ConstantPool;
 use crate::class_loader::raw_data::RawByteBuffer;
-use std::io::Error;
+
 /*
 https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.5
 field_info {
@@ -15,7 +17,8 @@ field_info {
 pub struct FieldInfo {
     access_flags: Vec<FieldAcceFlag>,
     name: String,
-    descriptor_name: String, // https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.3.2
+    descriptor_name: String,
+    // https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.3.2
     attributes_count: u16,
 }
 

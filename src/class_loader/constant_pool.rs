@@ -1,6 +1,7 @@
-use crate::class_loader::raw_data::RawByteBuffer;
 use std::fmt;
 use std::io::{Error, ErrorKind};
+
+use crate::class_loader::raw_data::RawByteBuffer;
 
 /* Some good articles related to JVM constant pool:
  * https://blogs.oracle.com/javamagazine/post/java-class-file-constant-pool
@@ -198,6 +199,7 @@ pub enum ConstantType {
     Reserved,
     Undefined,
 }
+
 impl ConstantType {
     pub fn from(data: &mut RawByteBuffer) -> Result<Self, Error> {
         let constant_tag = data.read_1_byte()?;

@@ -23,6 +23,7 @@ pub struct ClassFile {
     fields: Vec<FieldInfo>,
     methods: Vec<MethodInfo>,
 }
+
 impl ClassFile {
     pub fn new(data: &mut RawByteBuffer) -> Result<Self, Error> {
         let magic_number = data.read_4_bytes()?;
@@ -145,6 +146,7 @@ enum JavaVersion {
     Java8,
     Undefined,
 }
+
 impl JavaVersion {
     /**
      * https://mkyong.com/java/list-of-java-class-file-major-version-numbers/
@@ -178,6 +180,7 @@ enum ClassAccessFlag {
     Annotation = 0x2000,
     Enum = 0x4000,
 }
+
 impl ClassAccessFlag {
     fn values() -> Vec<ClassAccessFlag> {
         vec![

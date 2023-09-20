@@ -70,7 +70,6 @@ impl MethodInfo {
 
     pub fn get_code_attribute(&self) -> Option<&AttributeInfo> {
         for single_attribute in &self.attributes {
-
             if let AttributeInfo::Code {
                 name: _,
                 bytecode: _,
@@ -101,6 +100,7 @@ pub enum MethodAccessFlag {
     Strict = 0x0800,
     Synthehic = 0x1000,
 }
+
 impl MethodAccessFlag {
     fn values() -> Vec<MethodAccessFlag> {
         vec![

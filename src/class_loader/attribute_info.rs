@@ -142,7 +142,7 @@ pub enum Opcode {
     Iadd,
 
     //https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.iinc
-    Iinc{index: u8, value: i8},
+    Iinc { index: u8, value: i8 },
 
     // https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.if_icmp_cond
     Ificmpeq(u8, u8),
@@ -200,7 +200,7 @@ impl Opcode {
             0x08 => Ok(Opcode::Iconst5),
 
             0x10 => {
-                let byte_val = data.read_1_byte()?.try_into().unwrap() ;
+                let byte_val = data.read_1_byte()?.try_into().unwrap();
                 Ok(Opcode::Bipush { byte_val })
             }
             0x12 => {
@@ -225,7 +225,7 @@ impl Opcode {
 
             0x60 => Ok(Opcode::Iadd),
 
-            0x84 => Ok(Opcode::Iinc {index: data.read_1_byte()?, value: data.read_1_byte()? as i8}),
+            0x84 => Ok(Opcode::Iinc { index: data.read_1_byte()?, value: data.read_1_byte()? as i8 }),
 
             0x9F => Ok(Opcode::Ificmpeq(data.read_1_byte()?, data.read_1_byte()?)),
             0xA0 => Ok(Opcode::Ificmpne(data.read_1_byte()?, data.read_1_byte()?)),
@@ -286,7 +286,7 @@ impl Opcode {
             Opcode::Invokevirtual { name: _ } => 3,
             Opcode::Invokestatic { name: _ } => 3,
 
-            Opcode::Iinc{index: _, value: _} => 3,
+            Opcode::Iinc { index: _, value: _ } => 3,
 
             Opcode::Ificmpeq(_, _) => 3,
             Opcode::Ificmpne(_, _) => 3,

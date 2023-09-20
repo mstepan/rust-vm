@@ -4,7 +4,7 @@ use crate::class_loader::constant_pool::ConstantPool;
 use crate::class_loader::raw_data::RawByteBuffer;
 
 /*
-https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.7
+https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.7
 */
 #[derive(Debug)]
 pub enum AttributeInfo {
@@ -21,7 +21,7 @@ pub enum AttributeInfo {
 impl AttributeInfo {
     /*
     Attributes.
-    https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.7.3
+    https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.7.3
     */
     pub fn from(
         data: &mut RawByteBuffer,
@@ -32,7 +32,7 @@ impl AttributeInfo {
 
         /*
         4.7.3. The Code Attribute
-        https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.7.3
+        https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.7.3
          */
         if attr_name == "Code" {
             let max_stack = data.read_2_bytes()?;
@@ -73,7 +73,7 @@ impl AttributeInfo {
                 exception_table,
             })
         } else {
-            // https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.7.12
+            // https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.7.12
 
             for _ in 0..attr_length {
                 // TODO: just skip bytes here for now
@@ -115,7 +115,7 @@ impl ExceptionTableInfo {
 pub enum Opcode {
     Nop,
 
-    //https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.iconst_i
+    //https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.iconst_i
     Iconst0,
     Iconst1,
     Iconst2,
@@ -123,28 +123,28 @@ pub enum Opcode {
     Iconst4,
     Iconst5,
 
-    //https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.bipush
+    //https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.bipush
     Bipush { byte_val: i8 },
 
-    //https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.aload_n
+    //https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.aload_n
     Aload0,
     Aload1,
     Aload2,
     Aload3,
 
-    // https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.istore_n
+    // https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.istore_n
     Istore0,
     Istore1,
     Istore2,
     Istore3,
 
-    //https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.iadd
+    //https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.iadd
     Iadd,
 
-    //https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.iinc
+    //https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.iinc
     Iinc{index: u8, value: i8},
 
-    // https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.if_icmp_cond
+    // https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.if_icmp_cond
     Ificmpeq(u8, u8),
     Ificmpne(u8, u8),
     Ificmplt(u8, u8),
@@ -152,28 +152,28 @@ pub enum Opcode {
     Ificmpgt(u8, u8),
     Ificmple(u8, u8),
 
-    // https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.goto
+    // https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.goto
     Goto(u8, u8),
 
-    // https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.ireturn
+    // https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.ireturn
     Ireturn,
     Return,
 
-    //https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.getstatic
+    //https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.getstatic
     Getstatic { name: String },
 
-    //https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.invokevirtual
+    //https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.invokevirtual
     Invokevirtual { name: String },
 
     Invokespecial { name: String },
 
-    // https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.return
+    // https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.return
     Invokestatic { name: String },
 
-    // https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.ldc
+    // https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.ldc
     Ldc { name: String },
 
-    //https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.iload_n
+    //https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.iload_n
     Iload0,
     Iload1,
     Iload2,
@@ -183,7 +183,7 @@ pub enum Opcode {
 }
 
 /**
- * JVM instruction set https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5
+ * JVM instruction set https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5
  */
 impl Opcode {
     pub fn from(data: &mut RawByteBuffer, constant_pool: &ConstantPool) -> Result<Opcode, Error> {

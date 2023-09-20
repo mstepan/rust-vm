@@ -1,9 +1,11 @@
-use crate::class_loader::attribute_info::{AttributeInfo, Opcode};
+use std::io::Error;
+
+use crate::class_loader::attribute_info::AttributeInfo;
 use crate::class_loader::constant_pool::ConstantPool;
 use crate::class_loader::raw_data::RawByteBuffer;
-use std::io::Error;
+
 /*
-https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.6
+https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.6
 
 method_info {
     u2             access_flags;
@@ -70,7 +72,7 @@ impl MethodInfo {
         for single_attribute in &self.attributes {
 
             if let AttributeInfo::Code {
-                name,
+                name: _,
                 bytecode: _,
                 max_stack: _,
                 max_locals: _,

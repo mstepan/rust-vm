@@ -6,11 +6,11 @@ use crate::jvm::jvm_type::JvmValue;
 pub fn execute_bytecode(method: &MethodInfo, code_attribute: &AttributeInfo) {
 
     if let AttributeInfo::Code {
-        name,
+        name: _,
         bytecode,
         max_stack,
         max_locals,
-        exception_table,
+        exception_table: _,
     } = code_attribute {
         let mut frame = JvmFrame::new(*max_stack, *max_locals);
 
@@ -65,6 +65,14 @@ pub fn execute_bytecode(method: &MethodInfo, code_attribute: &AttributeInfo) {
                 },
 
                 Opcode::Return => {
+
+                    if let JvmValue::Int(val) = frame.get_local(3) {
+                        println!("res = {val}");
+                    }
+                    else {
+                        println!("Can't find result");
+                    }
+
                     println!("Returning from function '{}'", method.get_name());
                 }
                 _ => println!("Unprocessed opcode: {:#?}", cur),
@@ -76,10 +84,6 @@ pub fn execute_bytecode(method: &MethodInfo, code_attribute: &AttributeInfo) {
             pc += 1;
             _offset += cur.size() as usize;
         }
-
-        let x = 133;
-
-        // println!("{:#?}", bytecode);
     }
     else {
         panic!("Can't execute bytecode b/c AttributeInfo::Code not found");

@@ -10,7 +10,7 @@ use crate::class_loader::raw_data::RawByteBuffer;
 const JAVA_MAGIC_NUMBER: u32 = 0xCA_FE_BA_BE;
 
 /**
- * JVM file format https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html
+ * JVM file format https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html
  */
 #[derive(Debug)]
 pub struct ClassFile {

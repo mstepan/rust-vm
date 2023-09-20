@@ -1,7 +1,10 @@
 use crate::jvm::jvm_type::JvmValue;
 
 pub struct JvmFrame {
+    // the operand stack
     stack: Vec<JvmValue>,
+
+    // the local variables slots
     local_slots: Vec<JvmValue>,
 }
 
@@ -17,7 +20,7 @@ impl JvmFrame {
         self.stack.push(value);
     }
 
-    pub fn pop(&mut self) -> JvmValue{
+    pub fn pop(&mut self) -> JvmValue {
         self.stack.pop().expect("Can't be empty here")
     }
 
@@ -26,6 +29,10 @@ impl JvmFrame {
     }
 
     pub fn load_from_local(&mut self, local_idx: u16) {
-        self.stack.push( self.local_slots[local_idx as usize]);
+        self.stack.push(self.local_slots[local_idx as usize]);
+    }
+
+    pub fn get_local(&mut self, local_idx: u16) -> JvmValue {
+        self.local_slots[local_idx as usize]
     }
 }

@@ -129,6 +129,10 @@ impl ClassFile {
             format!("Can't find 'main' method for class {}", self.this_class),
         ))
     }
+
+    pub fn get_constant_pool(&self) -> &ConstantPool {
+        &self.constant_pool
+    }
 }
 
 #[derive(Debug, PartialEq)]

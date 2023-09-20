@@ -29,7 +29,7 @@ fn main() {
                     match class_file.main_method() {
                         Ok(main_method) => {
                             println!("'main'  found and will be executed");
-                            jvm_engine::execute_bytecode(main_method);
+                            jvm_engine::execute_bytecode(main_method, class_file.get_constant_pool());
                         }
                         Err(error) => panic!("Failed with error: {}", error),
                     }

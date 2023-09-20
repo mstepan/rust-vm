@@ -5,3 +5,5 @@ pub mod constant_pool;
 pub mod field_info;
 pub mod method_info;
 pub mod raw_data;
+
+pub mod opcodes;

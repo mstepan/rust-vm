@@ -1,4 +1,4 @@
-use std::io::{Error, ErrorKind};
+use std::io::Error;
 
 use crate::class_loader::constant_pool::ConstantPool;
 use crate::class_loader::raw_data::RawByteBuffer;
@@ -10,7 +10,7 @@ https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.7
 pub enum AttributeInfo {
     Code {
         name: String,
-        bytecode: Vec<Opcode>,
+        bytecode: Vec<u8>,
         max_stack: u16,
         max_locals: u16,
         exception_table: Vec<ExceptionTableInfo>,
@@ -38,15 +38,13 @@ impl AttributeInfo {
             let max_stack = data.read_2_bytes()?;
             let max_locals = data.read_2_bytes()?;
 
-            let mut code_length = data.read_4_bytes()?;
+            let bytecode_length = data.read_4_bytes()?;
 
-            let mut bytecode: Vec<Opcode> = Vec::with_capacity(code_length as usize);
+            let mut bytecode = Vec::with_capacity(bytecode_length as usize);
 
-            while code_length != 0 {
-                let opcode = Opcode::from(data, constant_pool)?;
-
-                code_length -= opcode.size() as u32;
-                bytecode.push(opcode);
+            // Fully read all opcodes representing function 'code' body
+            for _ in 0..bytecode_length {
+                bytecode.push(data.read_1_byte()?);
             }
 
             let exception_table_length = data.read_2_bytes()?;
@@ -111,195 +109,3 @@ impl ExceptionTableInfo {
     }
 }
 
-#[derive(Debug)]
-pub enum Opcode {
-    Nop,
-
-    //https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.iconst_i
-    Iconst0,
-    Iconst1,
-    Iconst2,
-    Iconst3,
-    Iconst4,
-    Iconst5,
-
-    //https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.bipush
-    Bipush { byte_val: i8 },
-
-    //https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.aload_n
-    Aload0,
-    Aload1,
-    Aload2,
-    Aload3,
-
-    // https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.istore_n
-    Istore0,
-    Istore1,
-    Istore2,
-    Istore3,
-
-    //https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.iadd
-    Iadd,
-
-    //https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.iinc
-    Iinc { index: u8, value: i8 },
-
-    // https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.if_icmp_cond
-    Ificmpeq(u8, u8),
-    Ificmpne(u8, u8),
-    Ificmplt(u8, u8),
-    Ificmpge(u8, u8),
-    Ificmpgt(u8, u8),
-    Ificmple(u8, u8),
-
-    // https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.goto
-    Goto(u8, u8),
-
-    // https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.ireturn
-    Ireturn,
-    Return,
-
-    //https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.getstatic
-    Getstatic { name: String },
-
-    //https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.invokevirtual
-    Invokevirtual { name: String },
-
-    Invokespecial { name: String },
-
-    // https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.return
-    Invokestatic { name: String },
-
-    // https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.ldc
-    Ldc { name: String },
-
-    //https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.iload_n
-    Iload0,
-    Iload1,
-    Iload2,
-    Iload3,
-
-    New { name: String },
-}
-
-/**
- * JVM instruction set https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5
- */
-impl Opcode {
-    pub fn from(data: &mut RawByteBuffer, constant_pool: &ConstantPool) -> Result<Opcode, Error> {
-        let code = data.read_1_byte()?;
-
-        match code {
-            0x00 => Ok(Opcode::Nop),
-
-            0x03 => Ok(Opcode::Iconst0),
-            0x04 => Ok(Opcode::Iconst1),
-            0x05 => Ok(Opcode::Iconst2),
-            0x06 => Ok(Opcode::Iconst3),
-            0x07 => Ok(Opcode::Iconst4),
-            0x08 => Ok(Opcode::Iconst5),
-
-            0x10 => {
-                let byte_val = data.read_1_byte()?.try_into().unwrap();
-                Ok(Opcode::Bipush { byte_val })
-            }
-            0x12 => {
-                let name_idx = data.read_1_byte()?;
-                let name = constant_pool.resolve_constant_pool_utf(name_idx as usize)?;
-                Ok(Opcode::Ldc { name })
-            }
-            0x1A => Ok(Opcode::Iload0),
-            0x1B => Ok(Opcode::Iload1),
-            0x1C => Ok(Opcode::Iload2),
-            0x1D => Ok(Opcode::Iload3),
-
-            0x2A => Ok(Opcode::Aload0),
-            0x2B => Ok(Opcode::Aload1),
-            0x2C => Ok(Opcode::Aload2),
-            0x2D => Ok(Opcode::Aload3),
-
-            0x3B => Ok(Opcode::Istore0),
-            0x3C => Ok(Opcode::Istore1),
-            0x3D => Ok(Opcode::Istore2),
-            0x3E => Ok(Opcode::Istore3),
-
-            0x60 => Ok(Opcode::Iadd),
-
-            0x84 => Ok(Opcode::Iinc { index: data.read_1_byte()?, value: data.read_1_byte()? as i8 }),
-
-            0x9F => Ok(Opcode::Ificmpeq(data.read_1_byte()?, data.read_1_byte()?)),
-            0xA0 => Ok(Opcode::Ificmpne(data.read_1_byte()?, data.read_1_byte()?)),
-            0xA1 => Ok(Opcode::Ificmplt(data.read_1_byte()?, data.read_1_byte()?)),
-            0xA2 => Ok(Opcode::Ificmpge(data.read_1_byte()?, data.read_1_byte()?)),
-            0xA3 => Ok(Opcode::Ificmpgt(data.read_1_byte()?, data.read_1_byte()?)),
-            0xA4 => Ok(Opcode::Ificmple(data.read_1_byte()?, data.read_1_byte()?)),
-
-            0xA7 => Ok(Opcode::Goto(data.read_1_byte()?, data.read_1_byte()?)),
-
-            0xAC => Ok(Opcode::Ireturn),
-            0xB1 => Ok(Opcode::Return),
-
-            0xB2 => {
-                let name = Self::read_index_byte_and_lokup_name(data, constant_pool)?;
-                Ok(Opcode::Getstatic { name })
-            }
-
-            0xB6 => {
-                let name = Self::read_index_byte_and_lokup_name(data, constant_pool)?;
-                Ok(Opcode::Invokevirtual { name })
-            }
-
-            0xBB => {
-                let name = Self::read_index_byte_and_lokup_name(data, constant_pool)?;
-                Ok(Opcode::New { name })
-            }
-            0xB7 => {
-                let name = Self::read_index_byte_and_lokup_name(data, constant_pool)?;
-                Ok(Opcode::Invokespecial { name })
-            }
-
-            0xB8 => {
-                let name = Self::read_index_byte_and_lokup_name(data, constant_pool)?;
-                Ok(Opcode::Invokestatic { name })
-            }
-
-            _ => Err(Error::new(
-                ErrorKind::InvalidData,
-                format!("Can't recognize opcode value: '{}'", code),
-            )),
-        }
-    }
-
-    fn read_index_byte_and_lokup_name(
-        data: &mut RawByteBuffer,
-        constant_pool: &ConstantPool,
-    ) -> Result<String, Error> {
-        let index_byte = (((data.read_1_byte()?) as usize) << 8) | data.read_1_byte()? as usize;
-        constant_pool.resolve_constant_pool_utf(index_byte)
-    }
-
-    pub fn size(&self) -> u8 {
-        match self {
-            Opcode::New { name: _ } => 3,
-            Opcode::Invokespecial { name: _ } => 3,
-            Opcode::Getstatic { name: _ } => 3,
-            Opcode::Invokevirtual { name: _ } => 3,
-            Opcode::Invokestatic { name: _ } => 3,
-
-            Opcode::Iinc { index: _, value: _ } => 3,
-
-            Opcode::Ificmpeq(_, _) => 3,
-            Opcode::Ificmpne(_, _) => 3,
-            Opcode::Ificmplt(_, _) => 3,
-            Opcode::Ificmpge(_, _) => 3,
-            Opcode::Ificmpgt(_, _) => 3,
-            Opcode::Ificmple(_, _) => 3,
-
-            Opcode::Goto(_, _) => 3,
-
-            Opcode::Ldc { name: _ } => 2,
-            Opcode::Bipush { byte_val: _ } => 2,
-            _ => 1,
-        }
-    }
-}

@@ -124,7 +124,7 @@ pub enum Opcode {
     Iconst5,
 
     //https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.bipush
-    Bipush { byte_val: u8 },
+    Bipush { byte_val: i8 },
 
     //https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html#jvms-6.5.aload_n
     Aload0,
@@ -200,7 +200,7 @@ impl Opcode {
             0x08 => Ok(Opcode::Iconst5),
 
             0x10 => {
-                let byte_val = data.read_1_byte()?;
+                let byte_val = data.read_1_byte()?.try_into().unwrap() ;
                 Ok(Opcode::Bipush { byte_val })
             }
             0x12 => {

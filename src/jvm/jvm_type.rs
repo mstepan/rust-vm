@@ -3,4 +3,5 @@
 pub enum JvmValue {
     Int(i32),
     // String(String),
+    Undefined,
 }

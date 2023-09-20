@@ -49,6 +49,10 @@ impl MethodInfo {
         })
     }
 
+    pub fn get_name(&self) -> &str {
+        &self.name
+    }
+
     fn read_name_or_descriptor(
         data: &mut RawByteBuffer,
         constant_pool: &ConstantPool,
@@ -62,17 +66,17 @@ impl MethodInfo {
         self.name == "main"
     }
 
-    pub fn get_bytecode(&self) -> Option<&[Opcode]> {
+    pub fn get_code_attribute(&self) -> Option<&AttributeInfo> {
         for single_attribute in &self.attributes {
+
             if let AttributeInfo::Code {
-                name: _,
-                bytecode,
+                name,
+                bytecode: _,
                 max_stack: _,
                 max_locals: _,
-                exception_table: _,
-            } = single_attribute
-            {
-                return Some(bytecode);
+                exception_table: _
+            } = single_attribute {
+                return Some(single_attribute);
             }
         }
 

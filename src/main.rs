@@ -45,9 +45,9 @@ fn main() {
 fn execute_main(main_method: &MethodInfo){
     println!("'main'  found and will be executed");
 
-    match main_method.get_bytecode() {
-        Some(bytecode) => {
-            jvm_engine::execute_bytecode(bytecode);
+    match main_method.get_code_attribute() {
+        Some(code_attribute) => {
+            jvm_engine::execute_bytecode(main_method, code_attribute);
         }
         None => panic!("No bytecode for 'main' function, really strange"),
     }
